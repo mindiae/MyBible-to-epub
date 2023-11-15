@@ -25,8 +25,53 @@ function getRecords(database, sql, variables = []) {
 }
 
 function parseText(text, verse, tooltip) {
-  
- return }
+  const startsWithWord = [
+    "word",
+    "dash",
+    "longdash",
+  ].includes(text[0].name)
+    ? true
+    : false;
+
+  const verseNumberWithTooltip = `<sup title="${tooltip}">${verse}</sup>`;
+  let parsedText = startsWithWord
+    ? verseNumberWithTooltip
+    : "";
+  text.forEach((element, index) => {
+    if (element.name == "pb") {
+      parsedText += "<br />\n";
+    } else if (element.name == "J") {
+      if (element.position == "start") {
+        parsedText += '<div class="j">';
+      } else {
+        parsedText += "</div>\n";
+      }
+    } else if (element.name == "t") {
+      if (element.position == "start") {
+        parsedText += '<span class="t">';
+      } else {
+        parsedText += "</span>\n";
+      }
+    } else if (element.name == "e") {
+      if (element.position == "start") {
+        parsedText += '<strong class="e">';
+      } else {
+        parsedText += "</strong>\n";
+      }
+    } else if (element.name == "word") {
+      parsedText += " " + element.data;
+    } else if (element.name == "punctuation") {
+      parsedText += element.data + " ";
+    } else if (element.name == "dash") {
+      parsedText += " - ";
+    } else if (element.name == "longdash") {
+      parsedText += " " + element.data + " ";
+    }
+    if (!startsWithWord && index == 0)
+      parsedText += verseNumberWithTooltip;
+  });
+  return parsedText;
+}
 
 function createAndSaveXhtml(
   book,
@@ -45,11 +90,14 @@ function createAndSaveXhtml(
   const mainContent = verses.reduce(
     (total, {verse, text}, index) => {
       return (
-        total + `
-<tr>
-  <td>${verse}. ${text}</td>
-  <td>${tooltipVerses[index]?.text || ""}</td>
-</tr>`);
+        total +
+        parseText(
+          JSON.parse(text),
+          verse,
+          tooltipVerses[index]?.text ||
+            "Module does not contain this verse!"
+        )
+      );
     },
     ""
   );
@@ -65,20 +113,16 @@ function createAndSaveXhtml(
   <body>
     ${h1 ? "<h1>" + h1 + "</h1>" : ""}
     <h2>${h2}</h2>
-    <table>
-    <tr>
-      <th>${databaseName}</th>
-      <th>${secondaryDatabaseName}</th>
-    </tr>
+    <div>
       ${mainContent}
-    </table>
+    </div>
   </body>
 </html>
 `;
   try {
     writeFileSync(
       sprintf(
-        "./output/%s/%03d_%03d.xhtml",
+        "../output/%s/%03d_%03d.xhtml",
         `${databaseName}+${secondaryDatabaseName}`,
         book.book_number,
         chapterNumber
@@ -106,11 +150,11 @@ const chapterStrings = await getRecords(
 
 if (
   !existsSync(
-    `./output/${databaseName}+${secondaryDatabaseName}`
+    `../output/${databaseName}+${secondaryDatabaseName}`
   )
 )
   mkdirSync(
-    `./output/${databaseName}+${secondaryDatabaseName}`
+    `../output/${databaseName}+${secondaryDatabaseName}`
   );
 
 const books = await getRecords(db, getBooksSQL);

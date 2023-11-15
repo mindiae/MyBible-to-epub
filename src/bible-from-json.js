@@ -22,6 +22,50 @@ function getRecords(sql, variables = []) {
   });
 }
 
+function parseText(text, verse) {
+  const startsWithWord
+    = ['word', 'dash', 'longdash'].includes(text[0].name)
+      ? true
+      : false;
+  let parsedText
+    = startsWithWord
+      ? `<sup>${verse}</sup>`
+      : "";
+  text.forEach((element, index) => {
+    if (element.name == "pb") {
+      parsedText += "<br />\n";
+    } else if (element.name == "J") {
+      if (element.position == "start") {
+        parsedText += '<div class="j">';
+      } else {
+        parsedText += "</div>\n";
+      }
+    } else if (element.name == "t") {
+      if (element.position == "start") {
+        parsedText += '<span class="t">';
+      } else {
+        parsedText += "</span>\n";
+      }
+    } else if (element.name == "e") {
+      if (element.position == "start") {
+        parsedText += '<strong class="e">';
+      } else {
+        parsedText += "</strong>\n";
+      }
+    } else if (element.name == "word") {
+      parsedText += " " + element.data;
+    } else if (element.name == "punctuation") {
+      parsedText += element.data + " ";
+    } else if (element.name == "dash") {
+      parsedText += " - ";
+    } else if (element.name == "longdash") {
+      parsedText += " " + element.data + " ";
+    }
+    if (!startsWithWord && index == 0)
+      parsedText += `<sup>${verse}</sup>`;
+  });
+  return parsedText;
+}
 
 function createAndSaveXhtml(book, chapterNumber,
   verses, chapterStrings) {
@@ -36,7 +80,7 @@ function createAndSaveXhtml(book, chapterNumber,
   let mainContent = "";
 
   verses.forEach(({ verse, text }) => {
-    mainContent += ` <sup>${verse}</sup> ${text}`;
+    mainContent += parseText(JSON.parse(text), verse);
   });
   //if (book.book_number == 470 && chapterNumber == 1)
   //  console.log( mainContent);
@@ -60,7 +104,7 @@ function createAndSaveXhtml(book, chapterNumber,
 `;
   //console.log(xhtml);
   try {
-    writeFileSync(sprintf('./output/%s/%03d_%03d.xhtml',
+    writeFileSync(sprintf('../output/%s/%03d_%03d.xhtml',
       databaseName,
       book.book_number,
       chapterNumber),
@@ -86,8 +130,8 @@ ORDER BY name ASC`;
   const chapterStrings = await getRecords(
     getChapterStringsSQL);
 
-  if (!existsSync(`./output/${databaseName}`))
-    mkdirSync(`./output/${databaseName}`);
+  if (!existsSync(`../output/${databaseName}`))
+    mkdirSync(`../output/${databaseName}`);
 
 
   const books = await getRecords(getBooksSQL);
