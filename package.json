@@ -11,7 +11,8 @@
     "text": "node src/bible-from-text.js",
     "parallel": "node src/parallel table.js",
     "double": "node src/double.js",
-    "commentaries": "node src/commentaries.js"
+    "commentaries": "node src/commentaries.js",
+    "comments": "node src/comments.js"
   },
   "dependencies": {
     "sprintf-js": "^1.1.3",
@@ -19,7 +20,7 @@
   },
   "devDependencies": {
     "better-sqlite3": "^9.1.1",
-    "eslint": "^8.53.0",
+    "eslint": "^8.54.0",
     "prettier": "^2.8.8"
   }
 }
