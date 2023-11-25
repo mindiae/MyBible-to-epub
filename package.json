@@ -7,12 +7,10 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "json": "node src/bible-from-json.js",
-    "text": "node src/bible-from-text.js",
-    "parallel": "node src/parallel table.js",
+    "bible": "node src/bible.js",
+    "parallel": "node src/parallel-table.js",
     "double": "node src/double.js",
-    "commentaries": "node src/commentaries.js",
-    "comments": "node src/comments.js"
+    "comments": "node src/Scomments.js"
   },
   "dependencies": {
     "sprintf-js": "^1.1.3",

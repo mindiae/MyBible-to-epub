@@ -45,6 +45,7 @@ try {
         WHERE name = 'description'`
       )
       .get().value;
+
     return {
       description,
       css,
@@ -57,29 +58,51 @@ try {
   console.error(err);
 }
 
-const selectChapterName = bibleDb.prepare(`
-  SELECT value FROM info
-  WHERE name = 'chapter_string'`);
+const chapterString = bibleDb
+  .prepare(
+    `SELECT value FROM info
+    WHERE name = 'chapter_string'`
+  )
+  .get().value;
 
-const chapterString = selectChapterName.get().value;
+const chapterStringPsalm =
+  bibleDb
+    .prepare(
+      `SELECT value FROM info
+  WHERE name = 'chapter_string_ps'`
+    )
+    ?.get().value ?? '';
 
-const selectChaptersAmount = bibleDb.prepare(`
-  SELECT max(chapter) AS max_chapter FROM verses
-  WHERE book_number = ?`);
+const getChapterName = (chapter, chapterString) => {
+  return chapterString.includes('%')
+    ? sprintf(chapterString, chapter)
+    : `${chapterString} ${chapter}`;
+};
 
-const chaptersAmount = selectChaptersAmount.get([bookNumber]).max_chapter;
+const getChapterNamePsalm = (psalmNumber, chapterStringPsalm) => {
+  return chapterStringPsalm.includes('%')
+    ? sprintf(chapterStringPsalm, psalmNumber)
+    : `${chapterStringPsalm} ${psalmNumber}`;
+};
+
+const chaptersAmount = bibleDb
+  .prepare(
+    `SELECT max(chapter) AS max_chapter FROM verses
+    WHERE book_number = ? AND verse = '1'`
+  )
+  .get([bookNumber]).max_chapter;
 
 const selectBibleChapter = bibleDb.prepare(`
   SELECT verse, text FROM verses
   WHERE book_number = ? AND chapter = ?`);
 
+if (!existsSync(`output/commentaries/${databaseName}`)) {
+  mkdirSync(`output/commentaries/${databaseName}`);
+}
+
 Array.from({ length: chaptersAmount }, (_, index) => index + 1).forEach(
   (chapter) => {
     const bibleVerses = selectBibleChapter.all([bookNumber, chapter]);
-
-    if (!existsSync(`output/commentaries/${databaseName}`)) {
-      mkdirSync(`output/commentaries/${databaseName}`);
-    }
 
     bibleVerses.forEach(({ verse, text }) => {
       const fileName = sprintf(
@@ -89,26 +112,32 @@ Array.from({ length: chaptersAmount }, (_, index) => index + 1).forEach(
         chapter,
         verse
       );
+
       writeFileSync(
         fileName,
         `<?xml version='1.0' encoding='utf-8'?>
           <html xmlns="http://www.w3.org/1999/xhtml">
           <head>`
       );
+
       comments.forEach(({ dbName }) => {
         appendFileSync(
           fileName,
           `<link rel="stylesheet" href="${dbName}.css">`
         );
       });
-      appendFileSync(fileName,
-        '</head><body>')
+
+      appendFileSync(fileName, '</head><body>');
+
       if (verse === 1) {
-        const chapterName = chapterString.includes('%')
-          ? sprintf(chapterString, chapter)
-          : `${chapterString} ${chapter}`;
-        appendFileSync(fileName, `<h1>${chapterName}</h1>`);
+        const headerName =
+          bookNumber === '230'
+            ? getChapterNamePsalm(chapter, chapterStringPsalm)
+            : getChapterName(chapter, chapterString);
+
+        appendFileSync(fileName, `<h1>${headerName}</h1>`);
       }
+
       appendFileSync(fileName, `<h2><sup>${verse}</sup>${text}</h2>`);
 
       comments.forEach(({ selectVerse, description }) => {
@@ -124,17 +153,15 @@ Array.from({ length: chaptersAmount }, (_, index) => index + 1).forEach(
           fileName,
           verseComment
             ? `<h3>${description}</h3>
-          ${verseComment}`
+              ${verseComment}`
             : ''
         );
       });
 
-      appendFileSync(fileName,
-        '</body></html>')
+      appendFileSync(fileName, '</body></html>');
     });
   }
 );
-
 
 comments.forEach(({ dbName, css }) => {
   writeFileSync(`output/commentaries/${databaseName}/${dbName}.css`, css);

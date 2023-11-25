@@ -24,10 +24,6 @@ function getRecords(database, sql, variables = []) {
   });
 }
 
-function parseText(text, verse, tooltip) {
-  
- return }
-
 function createAndSaveXhtml(
   book,
   chapterNumber,
