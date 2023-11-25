@@ -94,6 +94,7 @@ selectBooks.all().forEach(({ book_number, short_name, long_name }) => {
     appendFileSync(
       fileName,
       `<h2>${header2Name}</h2>
+      <section>
       `
     );
 
@@ -108,7 +109,8 @@ selectBooks.all().forEach(({ book_number, short_name, long_name }) => {
 
     appendFileSync(
       fileName,
-      `</body>
+      `</section>
+      </body>
       </html>
       `
     );
