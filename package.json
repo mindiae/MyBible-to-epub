@@ -8,6 +8,7 @@
   "type": "module",
   "scripts": {
     "bible": "node src/bible.js",
+    "dictionary": "node src/bibleWithDictionary.js",
     "parallel": "node src/parallel-table.js",
     "double": "node src/double.js",
     "comments": "node src/Scomments.js"
@@ -17,8 +18,8 @@
     "sqlite3": "^5.1.6"
   },
   "devDependencies": {
-    "better-sqlite3": "^9.1.1",
-    "eslint": "^8.54.0",
+    "better-sqlite3": "^9.2.0",
+    "eslint": "^8.55.0",
     "prettier": "^2.8.8"
   }
 }
